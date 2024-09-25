@@ -273,3 +273,4 @@ test/
 *.db
 *.0
 *.csv
+yolox_env/

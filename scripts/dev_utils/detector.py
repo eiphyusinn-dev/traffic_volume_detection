@@ -15,7 +15,7 @@ class Detector():
         super(Detector, self).__init__()
         self.device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
         self.exp = get_exp_by_name(model)
-        self.test_size = (960,960)  
+        self.test_size = (1024,1024)  
         self.model = self.exp.get_model()
         self.model.to(self.device)
         self.model.eval()
@@ -23,7 +23,7 @@ class Detector():
         self.model.load_state_dict(checkpoint["model"])
 
   
-    def detect(self, raw_img, visual=True, conf=0.4):
+    def detect(self, raw_img, visual=True, conf=0.5):
         info = {}
         img, ratio = preproc(raw_img, self.test_size)
         info['raw_img'] = raw_img

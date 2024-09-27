@@ -5,9 +5,9 @@
 @ date    : June 2023
 """
 
-from file.file_loader import FileLoader
-from detection.detection_results import Detection_Results
-from tracking.tracking_system import TrackingSystem
+from dev_utils.file.file_loader import FileLoader
+from dev_utils.detection.detection_results import Detection_Results
+from dev_utils.tracking.tracking_system import TrackingSystem
 
 import os, time, tqdm, pandas, glob, json
 import ijson

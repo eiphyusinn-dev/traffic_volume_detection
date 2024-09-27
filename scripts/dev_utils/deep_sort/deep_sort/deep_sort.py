@@ -56,7 +56,7 @@ class DeepSort(object):
     #         outputs = np.stack(outputs,axis=0)
     #     return outputs
 
-    def update(self, bbox_xywh, confidences, ori_img):
+    def update(self, bbox_xywh, confidences, class_ids, ori_img):
         if len(bbox_xywh) == 0:
             return np.array([])
         self.height, self.width = ori_img.shape[:2]
@@ -64,27 +64,30 @@ class DeepSort(object):
         # Generate detections
         features = self._get_features(bbox_xywh, ori_img)
         bbox_tlwh = self._xywh_to_tlwh(bbox_xywh)
-        detections = [Detection(bbox_tlwh[i], conf, features[i]) for i, conf in enumerate(confidences) if conf > self.min_confidence]  # Include class IDs
+        detections = [Detection(bbox_tlwh[i], conf,class_ids[i], features[i]) for i, conf in enumerate(confidences) if conf > self.min_confidence] 
 
         # Run on non-maximum suppression
         boxes = np.array([d.tlwh for d in detections])
         scores = np.array([d.confidence for d in detections])
+        class_idxs = np.array([d.class_id for d in detections])
         indices = non_max_suppression(boxes, self.nms_max_overlap, scores)
         detections = [detections[i] for i in indices]
-
+        # print(f'number of detections > {len(detections)}')
         # Update tracker
         self.tracker.predict()
         self.tracker.update(detections)
-
+        # print(f'number of tracks > {len(self.tracker.tracks)}')
         # Output bbox identities
         outputs = []
+        i = 0
         for track in self.tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue
             box = track.to_tlwh()
             x1, y1, x2, y2 = self._tlwh_to_xyxy(box)
             track_id = track.track_id
-            outputs.append(np.array([x1, y1, x2, y2, track_id], dtype=np.int32))  # Include class ID
+            class_id = track.class_id
+            outputs.append(np.array([x1, y1, x2, y2, track_id,class_id], dtype=np.int32))
 
         if len(outputs) > 0:
             outputs = np.stack(outputs, axis=0)

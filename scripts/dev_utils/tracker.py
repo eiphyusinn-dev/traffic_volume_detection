@@ -12,7 +12,7 @@ from dev_utils.utils.visualize import vis_track
 class_names = COCO_CLASSES
 
 class Tracker():
-    def __init__(self, filter_class=None, model='yolox-x', ckpt='weights/yolox_x.pth', ):
+    def __init__(self, filter_class=None, model='yolox-x', ckpt='weights/yolox_x.pth',):
         self.detector = Detector(model, ckpt)
         cfg = get_config()
         # cfg.merge_from_file("scripts/dev_utils/deep_sort/configs/deep_sort.yaml")
@@ -34,50 +34,60 @@ class Tracker():
                             use_cuda=True)
         self.filter_class = filter_class
 
-    # def update(self, image):
+    
+   
+    # def update(self, image,i,frame_data):
     #     info = self.detector.detect(image, visual=False)
-      
-    #     outputs = []
-    #     if info['box_nums']>0:
+        
+    #     outputs = []         
+    #     if info['box_nums'] > 0:
     #         bbox_xywh = []
     #         scores = []
-          
-    #         #bbox_xywh = torch.zeros((info['box_nums'], 4))
-    #         for (x1, y1, x2, y2), class_id, score  in zip(info['boxes'],info['class_ids'],info['scores']):
+    #         class_ids = []  # Store class IDs
 
+    #         for (x1, y1, x2, y2), class_id, score in zip(info['boxes'], info['class_ids'], info['scores']):
     #             if self.filter_class and class_names[int(class_id)] not in self.filter_class:
     #                 continue
-            
-    #             bbox_xywh.append([int((x1+x2)/2), int((y1+y2)/2), x2-x1, y2-y1])
+                
+    #             bbox_xywh.append([int((x1 + x2) / 2), int((y1 + y2) / 2), x2 - x1, y2 - y1])
     #             scores.append(score)
+    #             class_ids.append(class_id)  # Append class ID
 
     #         bbox_xywh = torch.Tensor(bbox_xywh)
-        
-    #         outputs = self.deepsort.update(bbox_xywh, scores, image)
-    #         image = vis_track(image, outputs)
-
+           
+    #         outputs = self.deepsort.update(bbox_xywh, scores, class_ids, image) 
+    #         image = vis_track(image, outputs,class_names)
+     
     #     return image, outputs
-    def update(self, image):
-        info = self.detector.detect(image, visual=False)
     
+    
+    def update(self, image,i,frame_data):
+        info = frame_data
         outputs = []
-        if info['box_nums'] > 0:
+         
+        if len(frame_data) > 0:
             bbox_xywh = []
             scores = []
             class_ids = []  # Store class IDs
 
-            for (x1, y1, x2, y2), class_id, score in zip(info['boxes'], info['class_ids'], info['scores']):
+            for item in info:
+                class_id = item['class_id']
+                box = item['boxes']
+                score = item['scores']
+                
+                x1, y1, x2, y2 = box
+
                 if self.filter_class and class_names[int(class_id)] not in self.filter_class:
                     continue
                 
                 bbox_xywh.append([int((x1 + x2) / 2), int((y1 + y2) / 2), x2 - x1, y2 - y1])
                 scores.append(score)
-                class_ids.append(class_id)  # Append class ID
+                class_ids.append(int(class_id))
 
-            bbox_xywh = torch.Tensor(bbox_xywh)
             
-            outputs = self.deepsort.update(bbox_xywh, scores, image) 
-    
-            image = vis_track(image, outputs)
+            bbox_xywh = torch.Tensor(bbox_xywh)
+           
+            outputs = self.deepsort.update(bbox_xywh, scores, class_ids, image) 
 
+            image = vis_track(image, outputs,class_names)
         return image, outputs
